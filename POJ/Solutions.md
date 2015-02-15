@@ -1,1 +1,129 @@
 # POJ
+
+
+POJ1015---Jury Compromise 
+
+之前想的dp[i][j]表示前i个人里选出j个人的情况下最小的辩控差，但是由于绝对值的关系，这样是不满足最优子结构的
+
+dp[i][j] 表示 选出i个人，辩控差为j的情况下，最大的辩控和
+dp[i][j] = max (dp[i - 1][x] + sum[x]);
+且cha[x] + x == j （cha[i]是第i个人的辩控差，sum[i]是第i个人的辩控和
+用path[i][j] 记录 dp[i][j]里选中的人的编号，枚举第i个人，迭代回溯就可以判断这个人之前是否选过
+辩控差可为负，所以加一个区间偏移量
+
+题解：
+/*************************************************************************
+    > File Name: POJ1015.cpp
+    > Author: ALex
+    > Mail: zchao1995@gmail.com 
+    > Created Time: 2015年02月15日 星期日 16时31分01秒
+ ************************************************************************/
+
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const double pi = acos(-1);
+const int inf = 0x3f3f3f3f;
+const double eps = 1e-15;
+typedef long long LL;
+typedef pair <int, int> PLL;
+
+int dp[25][1010];
+int path[25][1010];
+int d[222], p[222];
+int ans[22];
+int sum[222], cha[222];
+
+bool judge (int i, int j, int k)
+{
+    while (j > 0 && path[j][k] != i)
+    {
+        int x = path[j][k];
+        --j;
+        k -= cha[x];
+    }
+    return !j;
+}
+
+int main ()
+{
+    int n, m;
+    int icase = 1;
+    while (~scanf("%d%d", &n, &m))
+    {
+        if (!n && !m)
+        {
+            break;
+        }
+        memset (dp, -1, sizeof (dp));
+        memset (path, 0, sizeof(path));
+        for (int i = 1; i <= n; ++i)
+        {
+            scanf("%d%d", &p[i], &d[i]);
+            sum[i] = p[i] + d[i];
+            cha[i] = p[i] - d[i];
+        }
+        int fix = m * 20;
+        dp[0][fix] = 0;
+        for (int j = 1; j <= m; ++j)
+        {
+            for (int k = 0; k <= 2 * fix; ++k)
+            {
+                if (dp[j - 1][k] >= 0)
+                {
+                    for (int i = 1; i <= n; ++i)
+                    {
+                        if (dp[j][k + cha[i]] < dp[j - 1][k] + sum[i])
+                        {
+                            if (!judge (i, j - 1, k))
+                            {
+                                continue;
+                            }
+                            dp[j][k + cha[i]] = dp[j - 1][k] + sum[i];
+                            path[j][k + cha[i]] = i;
+                        }
+                    }
+                }
+            }
+        }
+        int x;
+        for (int k = 0; k <= fix; ++k)
+        {
+            if (dp[m][fix - k] >= 0 || dp[m][fix + k] >= 0)
+            {
+                x = k;
+                break;
+            }
+        }
+        int div = dp[m][fix - x] > dp[m][fix + x] ? fix - x : fix + x;
+        printf("Jury #%d\n", icase++);
+        int x1 = (dp[m][div] + div - fix) / 2;
+        int x2 = (dp[m][div] - div + fix) / 2;
+        printf("Best jury has value %d for prosecution and value %d for defence:\n", x1, x2);
+        int cnt = m;
+        while (path[m][div] > 0)
+        {
+            ans[m] = path[m][div];
+            div -= cha[path[m][div]];
+            --m;
+        }
+        sort (ans + 1, ans + cnt + 1);
+        for (int i = 1; i <= cnt; ++i)
+        {
+            printf(" %d", ans[i]);
+        }
+        printf("\n");
+    }
+    return 0;
+}
+
